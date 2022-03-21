@@ -17,3 +17,10 @@ Power: The maximum power of the engine in bhp.
 Seats: The number of seats in the car.
 New_Price: The price of a new car of the same model.
 Price: The price of the used car in INR Lakhs.
+
+# Data Cleaning
+* Extract string using regular expression  
+* Drop NA  
+* Specify variable type
+* Use USD as price unit for better illustration
+
