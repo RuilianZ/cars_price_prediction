@@ -1,0 +1,19 @@
+---
+title: "Used Cars Price Prediction - Midterm Project for Data Science II"
+author: "Roxy Zhang"
+date: "3/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+```{r}
+car = read_csv("data.csv") %>% 
+  janitor::clean_names() %>% 
+  select(-x1)
+```
+
