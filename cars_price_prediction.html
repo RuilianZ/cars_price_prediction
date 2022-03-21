@@ -175,9 +175,13 @@ pre code {
 </div>
 
 
-<pre class="r"><code>car = read_csv(&quot;data.csv&quot;) %&gt;% 
+<pre class="r"><code># data import and cleaning
+car = read_csv(&quot;data.csv&quot;) %&gt;% 
   janitor::clean_names() %&gt;% 
-  select(-x1)</code></pre>
+  select(- c(x1, new_price)) %&gt;% 
+  drop_na(power) %&gt;% 
+  filter(power != &quot;null bhp&quot;) %&gt;% 
+  mutate(price = price * 1309.57)</code></pre>
 <pre><code>## New names:
 ## * `` -&gt; ...1</code></pre>
 <pre><code>## Rows: 6019 Columns: 14
@@ -188,6 +192,15 @@ pre code {
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code># check for NA
+colSums(is.na(car))</code></pre>
+<pre><code>##              name          location              year kilometers_driven 
+##                 0                 0                 0                 0 
+##         fuel_type      transmission        owner_type           mileage 
+##                 0                 0                 0                 2 
+##            engine             power             seats             price 
+##                 0                 0                 2                 0</code></pre>
+<p>For the response variable <code>price</code>, the original data used 100000 Indian Rupee as unit. For better illustration, we transformed it to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022.</p>
 
 
 
