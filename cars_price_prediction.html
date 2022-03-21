@@ -175,13 +175,48 @@ pre code {
 </div>
 
 
+<div id="objective" class="section level2">
+<h2>Objective:</h2>
+<p>To predict the costs of used cars given the data collected from various sources and distributed across various locations in India.</p>
+</div>
+<div id="features-from-the-original-data" class="section level2">
+<h2>Features from the original data:</h2>
+<p>Name: The brand and model of the car.<br />
+Location: The location in which the car is being sold or is available for purchase.<br />
+Year: The year or edition of the model.<br />
+Kilometers_Driven: The total kilometres driven in the car by the previous owner(s) in KM.<br />
+Fuel_Type: The type of fuel used by the car.<br />
+Transmission: The type of transmission used by the car.<br />
+Owner_Type: Whether the ownership is Firsthand, Second hand or other.<br />
+Mileage: The standard mileage offered by the car company in kmpl or km/kg.<br />
+Engine: The displacement volume of the engine in cc.<br />
+Power: The maximum power of the engine in bhp.<br />
+Seats: The number of seats in the car.<br />
+New_Price: The price of a new car of the same model.<br />
+Price: The price of the used car in INR Lakhs.</p>
 <pre class="r"><code># data import and cleaning
 car = read_csv(&quot;data.csv&quot;) %&gt;% 
   janitor::clean_names() %&gt;% 
   select(- c(x1, new_price)) %&gt;% 
-  drop_na(power) %&gt;% 
+  drop_na() %&gt;% 
   filter(power != &quot;null bhp&quot;) %&gt;% 
-  mutate(price = price * 1309.57)</code></pre>
+  mutate(
+    price = price * 1309.57,
+    engine = gsub(&quot; CC&quot;, &quot;&quot;, engine),
+    mileage = gsub(&quot; km/kg&quot;, &quot;&quot;, mileage),
+    mileage = gsub(&quot; kmpl&quot;, &quot;&quot;, mileage),
+    power = gsub(&quot; bhp&quot;, &quot;&quot;, power)) %&gt;% 
+  mutate(
+    engine = as.numeric(engine),
+    mileage = as.numeric(mileage),
+    power = as.numeric(power),
+    name = as.factor(name),
+    location = as.factor(location),
+    fuel_type = as.factor(location),
+    transmission = as.factor(transmission),
+    owner_type = as.factor(owner_type),
+    seats = as.factor(seats)
+  )</code></pre>
 <pre><code>## New names:
 ## * `` -&gt; ...1</code></pre>
 <pre><code>## Rows: 6019 Columns: 14
@@ -197,10 +232,263 @@ colSums(is.na(car))</code></pre>
 <pre><code>##              name          location              year kilometers_driven 
 ##                 0                 0                 0                 0 
 ##         fuel_type      transmission        owner_type           mileage 
-##                 0                 0                 0                 2 
+##                 0                 0                 0                 0 
 ##            engine             power             seats             price 
-##                 0                 0                 2                 0</code></pre>
+##                 0                 0                 0                 0</code></pre>
+<pre class="r"><code># look at data summary
+dim(car)</code></pre>
+<pre><code>## [1] 5872   12</code></pre>
+<pre class="r"><code>summary(car)</code></pre>
+<pre><code>##                      name            location         year     
+##  Mahindra XUV500 W8 2WD:  49   Mumbai    : 775   Min.   :1998  
+##  Maruti Swift VDI      :  45   Hyderabad : 718   1st Qu.:2012  
+##  Honda City 1.5 S MT   :  34   Kochi     : 645   Median :2014  
+##  Maruti Swift Dzire VDI:  34   Coimbatore: 629   Mean   :2013  
+##  Hyundai i10 Sportz    :  30   Pune      : 594   3rd Qu.:2016  
+##  Maruti Ritz VDi       :  30   Delhi     : 545   Max.   :2019  
+##  (Other)               :5650   (Other)   :1966                 
+##  kilometers_driven      fuel_type       transmission           owner_type  
+##  Min.   :    171   Mumbai    : 775   Automatic:1702   First         :4839  
+##  1st Qu.:  33422   Hyderabad : 718   Manual   :4170   Fourth &amp; Above:   7  
+##  Median :  52609   Kochi     : 645                    Second        : 925  
+##  Mean   :  58317   Coimbatore: 629                    Third         : 101  
+##  3rd Qu.:  72403   Pune      : 594                                         
+##  Max.   :6500000   Delhi     : 545                                         
+##                    (Other)   :1966                                         
+##     mileage          engine         power           seats     
+##  Min.   : 0.00   Min.   : 624   Min.   : 34.2   5      :4919  
+##  1st Qu.:15.26   1st Qu.:1198   1st Qu.: 75.0   7      : 672  
+##  Median :18.20   Median :1496   Median : 97.7   8      : 133  
+##  Mean   :18.28   Mean   :1626   Mean   :113.3   4      :  99  
+##  3rd Qu.:21.10   3rd Qu.:1991   3rd Qu.:138.1   6      :  29  
+##  Max.   :33.54   Max.   :5998   Max.   :560.0   2      :  13  
+##                                                 (Other):   7  
+##      price         
+##  Min.   :   576.2  
+##  1st Qu.:  4606.4  
+##  Median :  7530.0  
+##  Mean   : 12577.0  
+##  3rd Qu.: 13095.7  
+##  Max.   :209531.2  
+## </code></pre>
+<pre class="r"><code>skimr::skim(car)</code></pre>
+<table>
+<caption>Data summary</caption>
+<tbody>
+<tr class="odd">
+<td align="left">Name</td>
+<td align="left">car</td>
+</tr>
+<tr class="even">
+<td align="left">Number of rows</td>
+<td align="left">5872</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of columns</td>
+<td align="left">12</td>
+</tr>
+<tr class="even">
+<td align="left">_______________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Column type frequency:</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">factor</td>
+<td align="left">6</td>
+</tr>
+<tr class="odd">
+<td align="left">numeric</td>
+<td align="left">6</td>
+</tr>
+<tr class="even">
+<td align="left">________________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Group variables</td>
+<td align="left">None</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: factor</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="left">ordered</th>
+<th align="right">n_unique</th>
+<th align="left">top_counts</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">name</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">1811</td>
+<td align="left">Mah: 49, Mar: 45, Hon: 34, Mar: 34</td>
+</tr>
+<tr class="even">
+<td align="left">location</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">11</td>
+<td align="left">Mum: 775, Hyd: 718, Koc: 645, Coi: 629</td>
+</tr>
+<tr class="odd">
+<td align="left">fuel_type</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">11</td>
+<td align="left">Mum: 775, Hyd: 718, Koc: 645, Coi: 629</td>
+</tr>
+<tr class="even">
+<td align="left">transmission</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">2</td>
+<td align="left">Man: 4170, Aut: 1702</td>
+</tr>
+<tr class="odd">
+<td align="left">owner_type</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">4</td>
+<td align="left">Fir: 4839, Sec: 925, Thi: 101, Fou: 7</td>
+</tr>
+<tr class="even">
+<td align="left">seats</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">FALSE</td>
+<td align="right">8</td>
+<td align="left">5: 4919, 7: 672, 8: 133, 4: 99</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: numeric</strong></p>
+<table>
+<colgroup>
+<col width="16%" />
+<col width="8%" />
+<col width="12%" />
+<col width="8%" />
+<col width="8%" />
+<col width="7%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="9%" />
+<col width="5%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">mean</th>
+<th align="right">sd</th>
+<th align="right">p0</th>
+<th align="right">p25</th>
+<th align="right">p50</th>
+<th align="right">p75</th>
+<th align="right">p100</th>
+<th align="left">hist</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">2013.48</td>
+<td align="right">3.16</td>
+<td align="right">1998.00</td>
+<td align="right">2012.00</td>
+<td align="right">2014.00</td>
+<td align="right">2016.00</td>
+<td align="right">2019.00</td>
+<td align="left">▁▁▂▇▇</td>
+</tr>
+<tr class="even">
+<td align="left">kilometers_driven</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">58317.00</td>
+<td align="right">92169.41</td>
+<td align="right">171.00</td>
+<td align="right">33422.50</td>
+<td align="right">52609.00</td>
+<td align="right">72402.75</td>
+<td align="right">6500000.00</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">mileage</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">18.28</td>
+<td align="right">4.37</td>
+<td align="right">0.00</td>
+<td align="right">15.26</td>
+<td align="right">18.20</td>
+<td align="right">21.10</td>
+<td align="right">33.54</td>
+<td align="left">▁▂▇▅▁</td>
+</tr>
+<tr class="even">
+<td align="left">engine</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1625.75</td>
+<td align="right">601.64</td>
+<td align="right">624.00</td>
+<td align="right">1198.00</td>
+<td align="right">1495.50</td>
+<td align="right">1991.00</td>
+<td align="right">5998.00</td>
+<td align="left">▇▃▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">power</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">113.28</td>
+<td align="right">53.88</td>
+<td align="right">34.20</td>
+<td align="right">75.00</td>
+<td align="right">97.70</td>
+<td align="right">138.10</td>
+<td align="right">560.00</td>
+<td align="left">▇▂▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">price</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">12577.00</td>
+<td align="right">14731.95</td>
+<td align="right">576.21</td>
+<td align="right">4606.41</td>
+<td align="right">7530.03</td>
+<td align="right">13095.70</td>
+<td align="right">209531.20</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+</tbody>
+</table>
 <p>For the response variable <code>price</code>, the original data used 100000 Indian Rupee as unit. For better illustration, we transformed it to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022.</p>
+</div>
 
 
 

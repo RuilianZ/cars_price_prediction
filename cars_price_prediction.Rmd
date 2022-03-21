@@ -7,21 +7,65 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(stringr) # for data cleaning
 
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
+
+
+## Objective:
+To predict the costs of used cars given the data collected from various sources and distributed across various locations in India.
+
+## Features from the original data:
+Name: The brand and model of the car.  
+Location: The location in which the car is being sold or is available for purchase.  
+Year: The year or edition of the model.  
+Kilometers_Driven: The total kilometres driven in the car by the previous owner(s) in KM.  
+Fuel_Type: The type of fuel used by the car.  
+Transmission: The type of transmission used by the car.  
+Owner_Type: Whether the ownership is Firsthand, Second hand or other.  
+Mileage: The standard mileage offered by the car company in kmpl or km/kg.  
+Engine: The displacement volume of the engine in cc.  
+Power: The maximum power of the engine in bhp.  
+Seats: The number of seats in the car.  
+New_Price: The price of a new car of the same model.  
+Price: The price of the used car in INR Lakhs.  
 
 ```{r}
 # data import and cleaning
 car = read_csv("data.csv") %>% 
   janitor::clean_names() %>% 
   select(- c(x1, new_price)) %>% 
-  drop_na(power) %>% 
+  drop_na() %>% 
   filter(power != "null bhp") %>% 
-  mutate(price = price * 1309.57)
+  mutate(
+    price = price * 1309.57,
+    engine = gsub(" CC", "", engine),
+    mileage = gsub(" km/kg", "", mileage),
+    mileage = gsub(" kmpl", "", mileage),
+    power = gsub(" bhp", "", power)) %>% 
+  mutate(
+    engine = as.numeric(engine),
+    mileage = as.numeric(mileage),
+    power = as.numeric(power),
+    name = as.factor(name),
+    location = as.factor(location),
+    fuel_type = as.factor(location),
+    transmission = as.factor(transmission),
+    owner_type = as.factor(owner_type),
+    seats = as.factor(seats)
+  )
+
 
 # check for NA
 colSums(is.na(car))
+
+# look at data summary
+dim(car)
+
+summary(car)
+
+skimr::skim(car)
 ```
 
 For the response variable `price`, the original data used 100000 Indian Rupee as unit. For better illustration, we transformed it to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022.
