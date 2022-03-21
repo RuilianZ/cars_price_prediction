@@ -40,9 +40,9 @@ car = read_csv("data.csv") %>%
   filter(power != "null bhp") %>% 
   mutate(
     price = price * 1309.57,
+    name = gsub(" .*$", "", name),
     engine = gsub(" CC", "", engine),
-    mileage = gsub(" km/kg", "", mileage),
-    mileage = gsub(" kmpl", "", mileage),
+    mileage = gsub(" .*$", "", mileage),
     power = gsub(" bhp", "", power)) %>% 
   mutate(
     engine = as.numeric(engine),

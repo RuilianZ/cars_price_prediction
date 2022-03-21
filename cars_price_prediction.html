@@ -202,9 +202,9 @@ car = read_csv(&quot;data.csv&quot;) %&gt;%
   filter(power != &quot;null bhp&quot;) %&gt;% 
   mutate(
     price = price * 1309.57,
+    name = gsub(&quot; .*$&quot;, &quot;&quot;, name),
     engine = gsub(&quot; CC&quot;, &quot;&quot;, engine),
-    mileage = gsub(&quot; km/kg&quot;, &quot;&quot;, mileage),
-    mileage = gsub(&quot; kmpl&quot;, &quot;&quot;, mileage),
+    mileage = gsub(&quot; .*$&quot;, &quot;&quot;, mileage),
     power = gsub(&quot; bhp&quot;, &quot;&quot;, power)) %&gt;% 
   mutate(
     engine = as.numeric(engine),
@@ -239,38 +239,30 @@ colSums(is.na(car))</code></pre>
 dim(car)</code></pre>
 <pre><code>## [1] 5872   12</code></pre>
 <pre class="r"><code>summary(car)</code></pre>
-<pre><code>##                      name            location         year     
-##  Mahindra XUV500 W8 2WD:  49   Mumbai    : 775   Min.   :1998  
-##  Maruti Swift VDI      :  45   Hyderabad : 718   1st Qu.:2012  
-##  Honda City 1.5 S MT   :  34   Kochi     : 645   Median :2014  
-##  Maruti Swift Dzire VDI:  34   Coimbatore: 629   Mean   :2013  
-##  Hyundai i10 Sportz    :  30   Pune      : 594   3rd Qu.:2016  
-##  Maruti Ritz VDi       :  30   Delhi     : 545   Max.   :2019  
-##  (Other)               :5650   (Other)   :1966                 
-##  kilometers_driven      fuel_type       transmission           owner_type  
-##  Min.   :    171   Mumbai    : 775   Automatic:1702   First         :4839  
-##  1st Qu.:  33422   Hyderabad : 718   Manual   :4170   Fourth &amp; Above:   7  
-##  Median :  52609   Kochi     : 645                    Second        : 925  
-##  Mean   :  58317   Coimbatore: 629                    Third         : 101  
-##  3rd Qu.:  72403   Pune      : 594                                         
-##  Max.   :6500000   Delhi     : 545                                         
-##                    (Other)   :1966                                         
-##     mileage          engine         power           seats     
-##  Min.   : 0.00   Min.   : 624   Min.   : 34.2   5      :4919  
-##  1st Qu.:15.26   1st Qu.:1198   1st Qu.: 75.0   7      : 672  
-##  Median :18.20   Median :1496   Median : 97.7   8      : 133  
-##  Mean   :18.28   Mean   :1626   Mean   :113.3   4      :  99  
-##  3rd Qu.:21.10   3rd Qu.:1991   3rd Qu.:138.1   6      :  29  
-##  Max.   :33.54   Max.   :5998   Max.   :560.0   2      :  13  
-##                                                 (Other):   7  
-##      price         
-##  Min.   :   576.2  
-##  1st Qu.:  4606.4  
-##  Median :  7530.0  
-##  Mean   : 12577.0  
-##  3rd Qu.: 13095.7  
-##  Max.   :209531.2  
-## </code></pre>
+<pre><code>##             name            location         year      kilometers_driven
+##  Maruti       :1175   Mumbai    : 775   Min.   :1998   Min.   :    171  
+##  Hyundai      :1058   Hyderabad : 718   1st Qu.:2012   1st Qu.:  33422  
+##  Honda        : 600   Kochi     : 645   Median :2014   Median :  52609  
+##  Toyota       : 394   Coimbatore: 629   Mean   :2013   Mean   :  58317  
+##  Mercedes-Benz: 316   Pune      : 594   3rd Qu.:2016   3rd Qu.:  72403  
+##  Volkswagen   : 314   Delhi     : 545   Max.   :2019   Max.   :6500000  
+##  (Other)      :2015   (Other)   :1966                                   
+##       fuel_type       transmission           owner_type      mileage     
+##  Mumbai    : 775   Automatic:1702   First         :4839   Min.   : 0.00  
+##  Hyderabad : 718   Manual   :4170   Fourth &amp; Above:   7   1st Qu.:15.26  
+##  Kochi     : 645                    Second        : 925   Median :18.20  
+##  Coimbatore: 629                    Third         : 101   Mean   :18.28  
+##  Pune      : 594                                          3rd Qu.:21.10  
+##  Delhi     : 545                                          Max.   :33.54  
+##  (Other)   :1966                                                         
+##      engine         power           seats          price         
+##  Min.   : 624   Min.   : 34.2   5      :4919   Min.   :   576.2  
+##  1st Qu.:1198   1st Qu.: 75.0   7      : 672   1st Qu.:  4606.4  
+##  Median :1496   Median : 97.7   8      : 133   Median :  7530.0  
+##  Mean   :1626   Mean   :113.3   4      :  99   Mean   : 12577.0  
+##  3rd Qu.:1991   3rd Qu.:138.1   6      :  29   3rd Qu.: 13095.7  
+##  Max.   :5998   Max.   :560.0   2      :  13   Max.   :209531.2  
+##                                 (Other):   7</code></pre>
 <pre class="r"><code>skimr::skim(car)</code></pre>
 <table>
 <caption>Data summary</caption>
@@ -331,8 +323,8 @@ dim(car)</code></pre>
 <td align="right">0</td>
 <td align="right">1</td>
 <td align="left">FALSE</td>
-<td align="right">1811</td>
-<td align="left">Mah: 49, Mar: 45, Hon: 34, Mar: 34</td>
+<td align="right">30</td>
+<td align="left">Mar: 1175, Hyu: 1058, Hon: 600, Toy: 394</td>
 </tr>
 <tr class="even">
 <td align="left">location</td>
