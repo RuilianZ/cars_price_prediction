@@ -13,10 +13,11 @@ theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
 
-## Objective:
+## Objective
 To predict the costs of used cars given the data collected from various sources and distributed across various locations in India.
 
-## Features from the original data:
+
+## Features from the original data
 Name: The brand and model of the car.  
 Location: The location in which the car is being sold or is available for purchase.  
 Year: The year or edition of the model.  
@@ -30,6 +31,9 @@ Power: The maximum power of the engine in bhp.
 Seats: The number of seats in the car.  
 New_Price: The price of a new car of the same model.  
 Price: The price of the used car in INR Lakhs.  
+
+
+## Data cleaning
 
 ```{r}
 # data import and cleaning
@@ -59,7 +63,15 @@ car = read_csv("data.csv") %>%
 
 # check for NA
 colSums(is.na(car))
+```
 
+For the response variable `price`, the original data used 100000 Indian Rupee as unit. For better illustration, we transformed it to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022.  
+For numeric variables with unit, the units are deleted for model-building.
+
+
+## Exploratory Data Analysis
+
+```{r}
 # look at data summary
 dim(car)
 
@@ -68,4 +80,10 @@ summary(car)
 skimr::skim(car)
 ```
 
-For the response variable `price`, the original data used 100000 Indian Rupee as unit. For better illustration, we transformed it to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022.
+There are 11 predictors and 1 response variable - `price`.  
+5 of the predictors are numeric, and the other 6 of them are categorical.
+
+```{r}
+
+```
+

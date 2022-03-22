@@ -176,11 +176,11 @@ pre code {
 
 
 <div id="objective" class="section level2">
-<h2>Objective:</h2>
+<h2>Objective</h2>
 <p>To predict the costs of used cars given the data collected from various sources and distributed across various locations in India.</p>
 </div>
 <div id="features-from-the-original-data" class="section level2">
-<h2>Features from the original data:</h2>
+<h2>Features from the original data</h2>
 <p>Name: The brand and model of the car.<br />
 Location: The location in which the car is being sold or is available for purchase.<br />
 Year: The year or edition of the model.<br />
@@ -194,6 +194,9 @@ Power: The maximum power of the engine in bhp.<br />
 Seats: The number of seats in the car.<br />
 New_Price: The price of a new car of the same model.<br />
 Price: The price of the used car in INR Lakhs.</p>
+</div>
+<div id="data-cleaning" class="section level2">
+<h2>Data cleaning</h2>
 <pre class="r"><code># data import and cleaning
 car = read_csv(&quot;data.csv&quot;) %&gt;% 
   janitor::clean_names() %&gt;% 
@@ -235,6 +238,11 @@ colSums(is.na(car))</code></pre>
 ##                 0                 0                 0                 0 
 ##            engine             power             seats             price 
 ##                 0                 0                 0                 0</code></pre>
+<p>For the response variable <code>price</code>, the original data used 100000 Indian Rupee as unit. For better illustration, we transformed it to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022.<br />
+For numeric variables with unit, the units are deleted for model-building.</p>
+</div>
+<div id="exploratory-data-analysis" class="section level2">
+<h2>Exploratory Data Analysis</h2>
 <pre class="r"><code># look at data summary
 dim(car)</code></pre>
 <pre><code>## [1] 5872   12</code></pre>
@@ -479,7 +487,8 @@ dim(car)</code></pre>
 </tr>
 </tbody>
 </table>
-<p>For the response variable <code>price</code>, the original data used 100000 Indian Rupee as unit. For better illustration, we transformed it to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022.</p>
+<p>There are 11 predictors and 1 response variable - <code>price</code>.<br />
+5 of the predictors are numeric, and the other 6 of them are categorical.</p>
 </div>
 
 
