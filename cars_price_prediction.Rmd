@@ -84,6 +84,6 @@ There are 11 predictors and 1 response variable - `price`.
 5 of the predictors are numeric, and the other 6 of them are categorical.
 
 ```{r}
-
+#test
 ```
 
