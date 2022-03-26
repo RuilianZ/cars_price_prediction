@@ -1,0 +1,56 @@
+---
+title: "Used Cars Price Prediction - Report"
+author: "Roxy Zhang"
+date: "3/25/2022"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: 2
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: '2'
+editor_options: 
+  chunk_output_type: console
+---
+
+\newpage
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(caret)
+
+theme_set(theme_minimal() + theme(legend.position = 'bottom'))
+```
+
+# Introduction
+
+Since the market of used cars is growing, there is an increasing need of the information of used cars prices. Therefore, we want to build a model predicting the price using attributes of the car as predictors, and thus provide information for the potential buyers for decision making.  
+
+Our data is from [Kaggle](https://www.kaggle.com/code/kuanghiu/used-cars-price-prediction). This dataset contains 22 (1998-2019) years of used cars information. There are 5872 rows and 11 predictors, among which 5 are numeric and 6 are categorical.  
+
+For analysis completeness, we dropped NA values. For better illustration, we transformed the original unit (Indian Rupee) of response variable **price** to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022. For numeric variables with unit, the units are deleted for model-building.
+ 
+
+# Exploratory analysis/visualization
+
+Is there any interesting structure present in the data?
+What were your findings?
+Here you can use any techniques as long as they are adequately explained. If you cannot find anything interesting, then describe what you tried and show that there isn’t much visible structure. Data science is NOT manipulating the data in some way until you get an answer.
+
+ 
+
+# Models
+
+What predictor variables did you include?
+What technique did you use? What assumptions, if any, are being made by using this technique?
+If there were tuning parameters, how did you pick their values?
+Discuss the training/test performance if you have a test data set.
+Which variables play important roles in predicting the response?
+What are the limitations of the models you used (if there are any)? Are the models flexible enough to capture the underlying truth?
+...
+ 
+
+# Conclusions
+
+What were your findings? Are they what you expect? What insights into the data can you make?
