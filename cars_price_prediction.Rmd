@@ -43,13 +43,15 @@ Price: The price of the used car in INR Lakhs.
 
 ```{r}
 # data import and cleaning
+ord_owner_type = c("First", "Second", "Third", "Fourth & Above")
+
 car = read_csv("data.csv") %>% 
   janitor::clean_names() %>% 
   select(- c(x1, new_price)) %>% 
   drop_na() %>% 
   filter(power != "null bhp") %>% 
   mutate(
-    price = price * 1309.57,
+    price = round(price * 1309.57, 0),
     name = gsub(" .*$", "", name),
     engine = gsub(" CC", "", engine),
     mileage = gsub(" .*$", "", mileage),
@@ -60,12 +62,15 @@ car = read_csv("data.csv") %>%
     power = as.numeric(power),
     name = as.factor(name),
     location = as.factor(location),
-    fuel_type = as.factor(location),
+    fuel_type = as.factor(fuel_type),
     transmission = as.factor(transmission),
     owner_type = as.factor(owner_type),
+    owner_type = fct_relevel(owner_type, ord_owner_type),
     seats = as.factor(seats)
-  )
+  ) %>% 
+  select(name, location, fuel_type, transmission, owner_type, seats, everything())
 
+range(car$year)
 
 # check for NA
 colSums(is.na(car))
@@ -90,7 +95,26 @@ There are 11 predictors and 1 response variable - `price`.
 5 of the predictors are numeric, and the other 6 of them are categorical.
 
 ```{r}
-#test
+# visualization
+car %>% 
+  ggplot(aes(x = fuel_type, y = price, fill = fuel_type)) +
+  geom_boxplot()
+
+car %>% 
+  ggplot(aes(x = transmission, y = price, fill = transmission)) +
+  geom_boxplot()
+
+car %>% 
+  ggplot(aes(x = owner_type, y = price, fill = owner_type)) +
+  geom_boxplot()
+
+car %>% 
+  ggplot(aes(x = owner_type, y = price, fill = owner_type)) +
+  geom_boxplot()
+
+car %>% 
+  ggplot(aes(x = seats, y = price, fill = seats)) +
+  geom_boxplot()
 ```
 
 ## Data preprocessig
