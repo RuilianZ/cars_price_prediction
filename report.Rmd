@@ -40,12 +40,29 @@ Our data is from [Kaggle](https://www.kaggle.com/code/kuanghiu/used-cars-price-p
 
 # Data Cleaning
 
-For analysis completeness, we dropped NA values. For better illustration, we transformed the original unit (100000 Indian Rupee) of response variable **price** to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022. For numeric variables with unit, the units are deleted for model-building. We also delete the car model from the original `name` variable, keeping only the brand name, since the model can be greatly explained by the predictors we are using. The type `Fourth` in owner_type is actually Fourth and above.
+For better illustration, we transformed the original unit (100000 Indian Rupee) of response variable **price** to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022. For numeric variables with unit, the units are deleted for model-building. We also delete the car model from the original `name` variable, keeping only the brand name, since the model can be greatly explained by the predictors we are using. The type `Fourth` in owner_type is actually Fourth and above. For analysis completeness, we dropped NA values. We also filtered out a row containing an extremely large value of kilometers_driven.  
+
+
+Below are the variable used:
+
+**name**: The brand of the car.  
+**location**: The location in which the car is being sold or is available for purchase.  
+**year**: The year or edition of the model.  
+**kilometers_driven**: The total kilometres driven in the car by the previous owner(s) in KM.  
+**fuel_type**: The type of fuel used by the car.  
+**transmission**: The type of transmission used by the car.  
+**owner_type**: Whether the ownership is Firsthand, Second hand or other.  
+**mileage**: The standard mileage offered by the car company in kmpl or km/kg.  
+**engine**: The displacement volume of the engine in cc.  
+**power**: The maximum power of the engine in bhp.  
+**seats**: The number of seats in the car.  
+**price**: The price of the used car in US Dollar. 
 
 ```{r data cleaning, include = FALSE}
-# data import and cleaning
+# re-level owner type
 ord_owner_type = c("First", "Second", "Third", "Fourth")
 
+# data import and cleaning
 car = read_csv("data.csv") %>% 
   janitor::clean_names() %>% 
   select(- c(x1, new_price)) %>% 
@@ -70,15 +87,17 @@ car = read_csv("data.csv") %>%
     owner_type = fct_relevel(owner_type, ord_owner_type),
     seats = as.factor(seats)
   ) %>% 
+  filter(kilometers_driven < 1000000) %>% 
   select(name, location, fuel_type, transmission, owner_type, seats, everything())
+
+# abnormal value
+car %>% 
+  filter(kilometers_driven > 1000000) %>% 
+  select(kilometers_driven) # 6500000
 ```
 
 
 # Exploratory Data Analysis
-
-Is there any interesting structure present in the data?
-What were your findings?
-Here you can use any techniques as long as they are adequately explained. If you cannot find anything interesting, then describe what you tried and show that there isn’t much visible structure. Data science is NOT manipulating the data in some way until you get an answer.
 
 ```{r fig.asp = 1.0, echo=FALSE}
 # visualization for categorical variables

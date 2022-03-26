@@ -30,28 +30,13 @@ theme_set(theme_minimal() + theme(legend.position = "bottom"))
 To predict the costs of used cars given the data collected from various sources and distributed across various locations in India.
 
 
-## Features from the original data
-Name: The brand and model of the car.  
-Location: The location in which the car is being sold or is available for purchase.  
-Year: The year or edition of the model.  
-Kilometers_Driven: The total kilometres driven in the car by the previous owner(s) in KM.  
-Fuel_Type: The type of fuel used by the car.  
-Transmission: The type of transmission used by the car.  
-Owner_Type: Whether the ownership is Firsthand, Second hand or other.  
-Mileage: The standard mileage offered by the car company in kmpl or km/kg.  
-Engine: The displacement volume of the engine in cc.  
-Power: The maximum power of the engine in bhp.  
-Seats: The number of seats in the car.  
-New_Price: The price of a new car of the same model.  
-Price: The price of the used car in INR Lakhs.  
-
-
 ## Data cleaning
 
 ```{r}
-# data import and cleaning
+# re-level owner type
 ord_owner_type = c("First", "Second", "Third", "Fourth")
 
+# data import and cleaning
 car = read_csv("data.csv") %>% 
   janitor::clean_names() %>% 
   select(- c(x1, new_price)) %>% 
@@ -76,7 +61,13 @@ car = read_csv("data.csv") %>%
     owner_type = fct_relevel(owner_type, ord_owner_type),
     seats = as.factor(seats)
   ) %>% 
+  filter(kilometers_driven < 1000000) %>% 
   select(name, location, fuel_type, transmission, owner_type, seats, everything())
+
+# abnormal value
+car %>% 
+  filter(kilometers_driven > 1000000) %>% 
+  select(kilometers_driven) # 6500000
 
 range(car$year)
 
@@ -135,7 +126,14 @@ p5 = car %>%
 
 ```{r}
 # visualization for numeric variables
+p6 = car %>% 
+  ggplot(aes(x = year, y = price)) +
+  geom_bar(stat = "identity")
 
+p7 = car %>% 
+  filter(kilometers_driven < 1000000) %>% 
+  ggplot(aes(x = kilometers_driven, y = price)) +
+  geom_bar(stat = "identity")
 ```
 
 
