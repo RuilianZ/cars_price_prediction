@@ -82,22 +82,22 @@ Here you can use any techniques as long as they are adequately explained. If you
 
 ```{r fig.asp = 1.0, echo=FALSE}
 # visualization for categorical variables
-
 theme_set(
   theme_minimal() +
   #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
   theme(legend.position = "none"))
 
 p1 = car %>% 
+  ggplot(aes(x = name, y = price, fill = name)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+p2 = car %>% 
   ggplot(aes(x = fuel_type, y = price, fill = fuel_type)) +
   geom_boxplot()
 
-p2 = car %>% 
-  ggplot(aes(x = transmission, y = price, fill = transmission)) +
-  geom_boxplot()
-
 p3 = car %>% 
-  ggplot(aes(x = owner_type, y = price, fill = owner_type)) +
+  ggplot(aes(x = transmission, y = price, fill = transmission)) +
   geom_boxplot()
 
 p4 = car %>% 
@@ -108,10 +108,13 @@ p5 = car %>%
   ggplot(aes(x = seats, y = price, fill = seats)) +
   geom_boxplot()
 
-(p1 + p2)/(p3 + p4)/(p5)
+(p2 + p3)/(p4 + p5)/(p1)
 ```
 
- 
+First, we look at the price distribution for all 5 categorical predictors respectively. There are some interesting findings:  
+* There are several attributes associated with higher price: fuel type diesel, automatic transmission, first-hand owner, and with 2 seats.  
+* The price range for each brand varies a lot. For example, Lamborghini has a condensed price range slightly above 150k (which is not surprising), while the majority stays below 25k. 
+
 
 # Models
 
