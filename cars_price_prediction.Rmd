@@ -15,6 +15,9 @@ editor_options:
 library(tidyverse)
 library(stringr) # for data cleaning
 library(patchwork) # align plots
+library(caret)
+library(ISLR)
+library(pls)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -61,13 +64,15 @@ car = read_csv("data.csv") %>%
     owner_type = fct_relevel(owner_type, ord_owner_type),
     seats = as.factor(seats)
   ) %>% 
-  filter(kilometers_driven < 1000000) %>% 
+  filter(kilometers_driven != 6500000) %>% 
   select(name, location, fuel_type, transmission, owner_type, seats, everything())
 
-# abnormal value
+# check abnormal value
 car %>% 
   filter(kilometers_driven > 1000000) %>% 
   select(kilometers_driven) # 6500000
+
+range(car$kilometers_driven)
 
 range(car$year)
 
@@ -125,23 +130,118 @@ p5 = car %>%
 ```
 
 ```{r}
-# visualization for numeric variables
-p6 = car %>% 
-  ggplot(aes(x = year, y = price)) +
-  geom_bar(stat = "identity")
-
-p7 = car %>% 
-  filter(kilometers_driven < 1000000) %>% 
-  ggplot(aes(x = kilometers_driven, y = price)) +
-  geom_bar(stat = "identity")
+# visualization for numeric variable year
+# log transformation of price
+car %>% 
+  ggplot(aes(x = year, y = log(price))) + 
+  geom_bar(stat = "identity", fill = "blue")
 ```
 
 
-## Data preprocessig
+## Data partitioning
 
 ```{r}
-# center/scale
+index_train = createDataPartition(
+  y = car$price,
+  p = 0.8,
+  list = FALSE
+)
 
+train_df = car[index_train, ]
+test_df = car[-index_train, ]
+
+train_x = model.matrix(price ~ ., train_df)[ ,-1]
+train_y = train_df$price
+
+test_x = model.matrix(price ~ ., test_df)[ , -1]
+test_y = test_df$price
 ```
 
 
+## Model building
+
+Start from the simplest - try lm first
+
+```{r}
+lm_fit = lm(price ~ ., data = car)
+#summary(lm_fit)
+```
+
+Adjusted R-squared:  0.7865 
+
+
+### Lasso
+
+```{r}
+set.seed(0324)
+
+lasso_fit = train(price ~ .,
+                  data = train_df,
+                  method = "glmnet",
+                  preProcess = c("center", "scale", "zv"), # zv for zero variance
+                  tuneGrid = expand.grid(alpha = 1, 
+                                          lambda = exp(seq(4, -2, length = 100))),
+                   trControl = trainControl(method = "cv"))
+
+summary(lasso_fit)
+
+# Plot RMSE against lambda
+plot(lasso_fit, xTrans = log)
+
+# Extract optimum lambda
+lasso_fit$bestTune
+
+# Extract coefficiencts
+#as.matrix(round(coef(lasso_fit$finalModel, lasso_fit$bestTune$lambda), 3))
+
+# Make prediction on test data
+lasso_predict = predict(lasso_fit, newdata = test_df)
+
+# Calculate test RMSE
+RMSE(lasso_predict, test_df$price)
+```
+
+### Elastic net
+
+```{r}
+set.seed(0324)
+
+enet_fit <- train(x = train_x,
+                  y = train_y,
+                  method = "glmnet",
+                  preProcess = c("center", "scale", "zv"),
+                  tuneGrid = expand.grid(alpha = seq(0, 1, length = 21),
+                                         lambda = exp(seq(-2, 7, length = 100))),
+                  trControl = trainControl(method = "cv"))
+
+# Plot RMSE against lambda
+myCol = rainbow(25)
+myPar = list(superpose.symbol = list(col = myCol),
+             superpose.line = list(col = myCol))
+
+plot(enet_fit, par.settings = myPar, xTrans = log, xlim = c(4, 7))
+
+
+# Extract optimum lambda
+enet_fit$bestTune
+```
+
+### Principal components regression (PCR)
+
+```{r}
+set.seed(0324)
+
+pcr_fit = train(x = train_x, 
+                y = train_y,
+                method = "pcr",
+                tuneGrid = data.frame(ncomp = 1:19),
+                trControl = trainControl(method = "cv"),
+                preProcess = c("center", "scale", "zv")) 
+
+summary(pcr_fit)
+
+pcr_pred = predict(pcr_fit, newdata = test_x)
+
+# test error: MSE
+mean((test_y - pcr_pred) ^ 2) # 50931405
+```

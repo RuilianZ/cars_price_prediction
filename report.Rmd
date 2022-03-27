@@ -96,8 +96,16 @@ car %>%
   select(kilometers_driven) # 6500000
 ```
 
-
 # Exploratory Data Analysis
+
+```{r fig.asp = 0.4, echo=FALSE}
+# visualization for numeric variable year
+car %>% 
+  ggplot(aes(x = year, y = log(price))) + 
+  geom_bar(stat = "identity", fill = "blue")
+```
+
+First, we plot the price against year. For better scaling, the price is log-transformed. There is an increasing trend of price from 1998-2014, while the price goes down rapidly since 2015.
 
 ```{r fig.asp = 1.0, echo=FALSE}
 # visualization for categorical variables
@@ -130,12 +138,17 @@ p5 = car %>%
 (p2 + p3)/(p4 + p5)/(p1)
 ```
 
-First, we look at the price distribution for all 5 categorical predictors respectively. There are some interesting findings:  
+Then we look at the price distribution for 5 categorical predictors respectively. There are some interesting findings:  
 * There are several attributes associated with higher price: fuel type diesel, automatic transmission, first-hand owner, and with 2 seats.  
-* The price range for each brand varies a lot. For example, Lamborghini has a condensed price range slightly above 150k (which is not surprising), while the majority stays below 25k. 
+* The price range for each brand varies a lot. For example, Lamborghini has a condensed price range slightly above 150k (which is not surprising), while the majority stays below 25k.
 
 
-# Models
+# Data Partitioning
+
+We split the data into training data and testing data by the proportion of 0.8:0.2.
+
+
+# Model Building
 
 What predictor variables did you include?
 What technique did you use? What assumptions, if any, are being made by using this technique?
