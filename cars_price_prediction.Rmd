@@ -18,6 +18,7 @@ library(patchwork) # align plots
 library(caret)
 library(ISLR)
 library(pls)
+library(ggcorrplot)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -136,6 +137,16 @@ car %>%
   ggplot(aes(x = year, y = log(price))) + 
   geom_bar(stat = "identity", fill = "blue")
 ```
+
+```{r}
+# correlation plot for all data
+model.matrix(price ~ ., data = car %>% select(-name, -location))[ , -1] %>% 
+  cor(use = "pairwise.complete.obs") %>% 
+  ggcorrplot(type = "full", lab = TRUE, lab_size = 1.5, tl.cex = 10.0)
+```
+
+```
+
 
 
 ## Data partitioning
