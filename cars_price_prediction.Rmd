@@ -301,8 +301,10 @@ mars_fit$bestTune
 
 ```{r}
 resamp = resamples(list(lasso = lasso_fit, elastic_net = enet_fit,
-                         pcr = pcr_fit, pls = pls_fit))
+                         pcr = pcr_fit, pls = pls_fit, mars = mars_fit))
 
 summary(resamp)
+
+bwplot(resamp, metric = "RMSE")
 ```
 
