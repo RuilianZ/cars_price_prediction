@@ -1,5 +1,5 @@
 ---
-title: "Used Cars Price Prediction - Report"
+title: "Used Cars Price Prediction Model Training"
 author: "Roxy Zhang"
 date: "3/25/2022"
 output:
@@ -140,8 +140,9 @@ p5 = car %>%
 ```
 
 Then I look at the price distribution for 5 categorical predictors respectively. There are some interesting findings:  
-1. There are several attributes associated with higher price: fuel type diesel, automatic transmission, first-hand owner, and with 2 seats.  
-2. The price range for each brand varies a lot. For example, Lamborghini has a condensed price range slightly above 150k (which is not surprising), while the majority stays below 25k.
+1. There are several attributes associated with higher price: fuel type diesel, automatic transmission, first-hand owner, and cars with 2 seats.  
+2. The price range for each brand varies a lot. For example, Lamborghini has a condensed price range slightly above 150k (which is not surprising), while the majority stays below 25k.  
+3. There is a relatively large number of outliers observed, indicating the big variance of our response variable. This may because of the volatility of used cars market, which in turn suggests the significance of our project. 
 
 ```{r, echo = FALSE}
 # correlation plot for all data
@@ -150,11 +151,12 @@ model.matrix(price ~ ., data = car %>% select(-name, -location))[ , -1] %>%
   ggcorrplot(type = "full", lab = TRUE, lab_size = 1.5, tl.cex = 10.0)
 ```
 
+For better visualization, categorical variables with over ten terms (`name`, `location`) are filtered out in the correlation plot. From the upper-right corner of the plot we can see a strong positive correlation between `engine` and `power`. Besides, `milage` is negatively associated with both `engine` and `power`.  
 
 
 # Data Partitioning
 
-I split the data into training data and testing data by the proportion of 0.8:0.2.
+The data is splitted into training data and testing data by the proportion of 0.8:0.2.
 
 
 # Model Building
@@ -191,7 +193,7 @@ Elastic net is a regularized regression method that linearly combines the L1 and
 
 # Model limitations
 
-The penalty function of Lasso has several limitations. For example (not the case of this data), in the "large p, small n" case (high-dimensional data with few examples), the Lasso selects at most n variables before it saturates. Also if there is a group of highly correlated variables, then the Lasso tends to select one variable from a group and ignore the others. To overcome these limitations, the elastic net adds a quadratic part to the penalty, which when used alone is ridge regression.
+The penalty function of Lasso has several limitations. For example (not the case of this data), in the "large p, small n" case (high-dimensional data with few examples), the Lasso selects at most n variables before it saturates. Also if there is a group of highly correlated variables, then the Lasso tends to select one variable from a group and ignore the others. As is mentioned above, there are some association among `power`, `engine` and `mileage`, thus the lasso model's performance is not so well. To overcome these limitations, the elastic net adds a quadratic part to the penalty, which when used alone is ridge regression.
 
 # Conclusions
 
