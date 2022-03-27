@@ -183,7 +183,9 @@ test_all = model.matrix(price ~ ., test_df) # for enet prediction
 ```
 
 
-# Model Building
+# Models
+
+## Model Building
 
 4 models are used to fit the training data: Lasso, Elastic Net,  Partial least squares (PLS), and Multivariate Adaptive Regression Spline (MARS). Cross validation is used to select the best parameter or parameter combination for each model.
 
@@ -205,7 +207,7 @@ Instead of finding hyperplanes of maximum variance between the response and inde
 
 MARS is a non-parametric regression technique and can be seen as an extension of linear models, which can can be used to model nonlinear relationships and interactions between a set of predictor variables and a response variable. The best tune metrics are nprune = 12, degree = 2. There are 12 terms in the final model.
 
-```{r, echo = FALSE}
+```{r, message = FALSE, echo = FALSE}
 # models
 set.seed(0324)
 
@@ -244,7 +246,7 @@ mars_fit = train(x = train_x,
 
 lasso_predict = predict(lasso_fit, newdata = test_df)
 enet_predict = predict(enet_fit, newdata = test_all)
-pls_pred = predict(pls_fit, newdata = test_x)
+pls_predict = predict(pls_fit, newdata = test_x)
 #mars_pred = predict(pls_fit, newdata = test_x)
 ```
 
@@ -267,7 +269,9 @@ t4 = plot(mars_fit)
 grid.arrange(t1, t2, t3, t4, nrow = 2)
 ```
 
-```{r}
+The plots for tuning parameters are consistent with the best tuning parameters reported above.
+
+```{r, echo = FALSE}
 # vip plots
 library(vip)
 v1 = vip(lasso_fit$finalModel)
@@ -278,8 +282,37 @@ v4 = vip(mars_fit$finalModel)
 grid.arrange(v1, v2, v3, v4, nrow = 2)
 ```
 
+From the variance importance plots above, `power` and `year` exist in all four plots, indicating that they are important predictors.
 
-# Model limitations
+
+## Model selection
+
+```{r, echo = FALSE}
+resamp = resamples(list(lasso = lasso_fit, elastic_net = enet_fit,
+                         pls = pls_fit, mars = mars_fit))
+
+summary(resamp)
+
+bwplot(resamp, metric = "RMSE")
+```
+
+By plotting the root mean square error (RMSE) of training data, MARS model can be selected since it has the smallest RMSE. 
+
+```{r, echo = FALSE}
+# test error: MSE
+lasso_err = mean((test_y - lasso_predict) ^ 2)
+enet_err = mean((test_y - enet_predict) ^ 2)
+pls_err = mean((test_y - pls_predict) ^ 2)
+
+test_MSE = c(lasso_err, enet_err, pls_err)
+model = c("lasso", "enet", "pls")
+
+as.data.frame(cbind(model, test_MSE))
+```
+
+For the 3 linear models, the test error is calculated using the test data. The PLS model has the least test error, so it is more preferred among the linear models.
+
+## Model limitations
 
 The penalty function of Lasso has several limitations. For example (not the case of this data), in the "large p, small n" case (high-dimensional data with few examples), the Lasso selects at most n variables before it saturates. Also if there is a group of highly correlated variables, then the Lasso tends to select one variable from a group and ignore the others. As is mentioned above, there are some association among `power`, `engine` and `mileage`, thus the lasso model's performance is not so well. To overcome these limitations, the elastic net adds a quadratic part to the penalty, which when used alone is ridge regression.
 
