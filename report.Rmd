@@ -33,19 +33,15 @@ theme_set(theme_minimal() + theme(legend.position = 'bottom'))
 
 
 # Introduction
-
 Since the market of used cars is growing, there is an increasing need of the information of used cars prices. Therefore, I want to build a model predicting the price using attributes of the car as predictors, and thus provide information for the potential buyers for decision making.  
 
 Our data is from [Kaggle](https://www.kaggle.com/code/kuanghiu/used-cars-price-prediction). This dataset contains 22 (1998-2019) years of used cars information. There are 5872 rows and 11 predictors, among which 5 are numeric and 6 are categorical.  
 
 
 # Data Cleaning
-
 For better illustration, I transformed the original unit (100000 Indian Rupee) of response variable **price** to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022. For numeric variables with unit, the units are deleted for model-building. I also delete the car model from the original `name` variable, keeping only the brand name, since the model can be greatly explained by the predictors I are using. The type `Fourth` in owner_type is actually Fourth and above. For analysis completeness, I dropped NA values. I also filtered out a row containing an extremely large value of kilometers_driven.  
 
-
 Below are the variable used:
-
 **name**: The brand of the car.  
 **location**: The location in which the car is being sold or is available for purchase.  
 **year**: The year or edition of the model.  
@@ -98,7 +94,6 @@ car %>%
 ```
 
 # Exploratory Data Analysis
-
 ```{r fig.asp = 0.4, echo=FALSE}
 # visualization for numeric variable year
 car %>% 
@@ -160,9 +155,7 @@ For better visualization, categorical variables with over ten terms (`name`, `lo
 
 
 # Data Partitioning
-
 The data is split into training data and testing data by the proportion of 0.8:0.2.
-
 ```{r, echo = FALSE}
 index_train = createDataPartition(
   y = car$price,
@@ -182,31 +175,22 @@ test_y = test_df$price
 test_all = model.matrix(price ~ ., test_df) # for enet prediction
 ```
 
-
 # Models
-
 ## Model Building
-
 4 models are used to fit the training data: Lasso, Elastic Net,  Partial least squares (PLS), and Multivariate Adaptive Regression Spline (MARS). Cross validation is used to select the best parameter or parameter combination for each model.
 
-
 ### Lasso
-
 The tuning parameter $\lambda$ controls the L1 regularization, as $\lambda$ increases, the number of predictors in the model decreases. Setting the candidate values of $\lambda$ to be from `r exp(-2)` to `r exp(4)` with 100 steps, the best-tune $\lambda$ is 2.069. All five numeric predictors are included in the final model.   
 
 ### Elastic Net
-
 Elastic net is a regularized regression method that linearly combines the L1 and L2 penalties of the Lasso and Ridge methods.
 In addition to setting and choosing a lambda value, elastic net also allows us to tune the alpha parameter where $\alpha$ = 0 corresponds to Ridge and $\alpha$ = 1 to Lasso. The optimum alpha chosen is 0.25, and the optimum $\lambda$ is 5.136.  
 
 ### Partial least squares (PLS)
-
 Instead of finding hyperplanes of maximum variance between the response and independent variables, PLS finds a linear regression model by projecting the predicted variables and the observable variables to a new space. The tuning parameter - number of components in the final model is 18.
 
 ### Multivariate Adaptive Regression Spline (MARS)
-
 MARS is a non-parametric regression technique and can be seen as an extension of linear models, which can can be used to model nonlinear relationships and interactions between a set of predictor variables and a response variable. The best tune metrics are nprune = 12, degree = 2. There are 12 terms in the final model.
-
 ```{r, message = FALSE, echo = FALSE}
 # models
 set.seed(0324)
@@ -250,7 +234,13 @@ pls_predict = predict(pls_fit, newdata = test_x)
 #mars_pred = predict(pls_fit, newdata = test_x)
 ```
 
-```{r, echo = FALSE}
+```{r, message = FALSE, echo = FALSE}
+knitr::opts_chunk$set(
+  fig.width = 5,
+  fig.asp = .7,
+  out.width = "90%"
+)
+
 # tuning parameters plots
 library(gridExtra)
 
@@ -270,8 +260,13 @@ grid.arrange(t1, t2, t3, t4, nrow = 2)
 ```
 
 The plots for tuning parameters are consistent with the best tuning parameters reported above.
+```{r, message = FALSE, echo = FALSE}
+knitr::opts_chunk$set(
+  fig.width = 5,
+  fig.asp = .7,
+  out.width = "90%"
+)
 
-```{r, echo = FALSE}
 # vip plots
 library(vip)
 v1 = vip(lasso_fit$finalModel)
@@ -281,21 +276,21 @@ v4 = vip(mars_fit$finalModel)
 
 grid.arrange(v1, v2, v3, v4, nrow = 2)
 ```
-
-From the variance importance plots above, `power` and `year` exist in all four plots, indicating that they are important predictors.
+F
+rom the variance importance plots above, `power` and `year` exist in all four plots, indicating that they are important predictors.
 
 
 ## Model selection
-
-```{r, echo = FALSE}
+```{r, include = FALSE}
 resamp = resamples(list(lasso = lasso_fit, elastic_net = enet_fit,
                          pls = pls_fit, mars = mars_fit))
 
 summary(resamp)
-
-bwplot(resamp, metric = "RMSE")
 ```
 
+```{r, echo = FALSE}
+bwplot(resamp, metric = "RMSE")
+```
 By plotting the root mean square error (RMSE) of training data, MARS model can be selected since it has the smallest RMSE. 
 
 ```{r, echo = FALSE}
@@ -305,17 +300,16 @@ enet_err = mean((test_y - enet_predict) ^ 2)
 pls_err = mean((test_y - pls_predict) ^ 2)
 
 test_MSE = c(lasso_err, enet_err, pls_err)
-model = c("lasso", "enet", "pls")
+model = c("Lasso", "Elastic Net", "PLS")
 
-as.data.frame(cbind(model, test_MSE))
+as.data.frame(cbind(model, test_MSE)) %>% 
+  knitr::kable()
 ```
 
 For the 3 linear models, the test error is calculated using the test data. The PLS model has the least test error, so it is more preferred among the linear models.
 
 ## Model limitations
-
 The penalty function of Lasso has several limitations. For example (not the case of this data), in the "large p, small n" case (high-dimensional data with few examples), the Lasso selects at most n variables before it saturates. Also if there is a group of highly correlated variables, then the Lasso tends to select one variable from a group and ignore the others. As is mentioned above, there are some association among `power`, `engine` and `mileage`, thus the lasso model's performance is not so well. To overcome these limitations, the elastic net adds a quadratic part to the penalty, which when used alone is ridge regression.
 
 # Conclusions
-
 What Ire your findings? Are they what you expect? What insights into the data can you make?
