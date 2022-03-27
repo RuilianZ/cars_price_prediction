@@ -113,8 +113,7 @@ First, I plot the price against year. For better scaling, the price is log-trans
 p1 = car %>% 
   ggplot(aes(x = name, y = price, fill = name)) +
   geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   theme(legend.position = "none")
 
 p2 = car %>% 
@@ -179,7 +178,8 @@ train_y = train_df$price
 
 test_x = model.matrix(price ~ ., test_df)[ , -1]
 test_y = test_df$price
-test_all = model.matrix(price ~ ., test_df) # for nent prediction
+
+test_all = model.matrix(price ~ ., test_df) # for enet prediction
 ```
 
 
@@ -250,15 +250,32 @@ pls_pred = predict(pls_fit, newdata = test_x)
 
 ```{r, echo = FALSE}
 # tuning parameters plots
-#t1 = 
-  
-#t2
-#t3
+library(gridExtra)
 
-t4 = ggplot(mars_fit)
-#t4
+t1 = plot(lasso_fit, xTrans = log)
 
-#(t1 + t2)/(t3 + t4)
+myCol = rainbow(25)
+myPar = list(superpose.symbol = list(col = myCol),
+             superpose.line = list(col = myCol))
+
+t2 = plot(enet_fit, xTrans = log, xlim = c(4, 7))
+
+t3 = plot(pls_fit)
+
+t4 = plot(mars_fit)
+
+grid.arrange(t1, t2, t3, t4, nrow = 2)
+```
+
+```{r}
+# vip plots
+library(vip)
+v1 = vip(lasso_fit$finalModel)
+v2 = vip(enet_fit$finalModel)
+v3 = vip(pls_fit$finalModel)
+v4 = vip(mars_fit$finalModel)
+
+grid.arrange(v1, v2, v3, v4, nrow = 2)
 ```
 
 
