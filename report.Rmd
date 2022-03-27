@@ -20,6 +20,7 @@ editor_options:
 library(tidyverse)
 library(patchwork)
 library(caret)
+library(ggcorrplot)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -142,6 +143,14 @@ Then I look at the price distribution for 5 categorical predictors respectively.
 1. There are several attributes associated with higher price: fuel type diesel, automatic transmission, first-hand owner, and with 2 seats.  
 2. The price range for each brand varies a lot. For example, Lamborghini has a condensed price range slightly above 150k (which is not surprising), while the majority stays below 25k.
 
+```{r, echo = FALSE}
+# correlation plot for all data
+model.matrix(price ~ ., data = car %>% select(-name, -location))[ , -1] %>% 
+  cor(use = "pairwise.complete.obs") %>% 
+  ggcorrplot(type = "full", lab = TRUE, lab_size = 1.5, tl.cex = 10.0)
+```
+
+
 
 # Data Partitioning
 
@@ -167,6 +176,22 @@ What are the limitations of the models you used (if there are any)? Are the mode
 The tuning parameter $\lambda$ controls the L1 regularization, as $\lambda$ increases, the number of predictors in the model decreases. Setting the candidate values of $\lambda$ to be from `r exp(-2)` to `r exp(4)` with 100 steps, the best-tune $\lambda$ is 2.069. 
 
 ### Elastic Net
+
+Elastic net is a regularized regression method that linearly combines the L1 and L2 penalties of the lasso and ridge methods.
+
+### Principal components regression (PCR)
+
+
+### Partial least squares (PLS)
+
+
+### Multivariate Adaptive Regression Spline (MARS)
+
+
+
+# Model limitations
+
+The penalty function of Lasso has several limitations. For example (not the case of this data), in the "large p, small n" case (high-dimensional data with few examples), the Lasso selects at most n variables before it saturates. Also if there is a group of highly correlated variables, then the Lasso tends to select one variable from a group and ignore the others. To overcome these limitations, the elastic net adds a quadratic part to the penalty, which when used alone is ridge regression.
 
 # Conclusions
 
