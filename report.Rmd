@@ -139,7 +139,8 @@ p5 = car %>%
 (p2 + p3)/(p4 + p5)/(p1)
 ```
 
-Then I look at the price distribution for 5 categorical predictors respectively. There are some interesting findings:  
+Then I look at the price distribution for 5 categorical predictors respectively. There are some interesting findings: 
+
 1. There are several attributes associated with higher price: fuel type diesel, automatic transmission, first-hand owner, and cars with 2 seats.  
 2. The price range for each brand varies a lot. For example, Lamborghini has a condensed price range slightly above 150k (which is not surprising), while the majority stays below 25k.  
 3. There is a relatively large number of outliers observed, indicating the big variance of our response variable. This may because of the volatility of used cars market, which in turn suggests the significance of our project. 
@@ -148,7 +149,7 @@ Then I look at the price distribution for 5 categorical predictors respectively.
 # correlation plot for all data
 model.matrix(price ~ ., data = car %>% select(-name, -location))[ , -1] %>% 
   cor(use = "pairwise.complete.obs") %>% 
-  ggcorrplot(type = "full", lab = TRUE, lab_size = 1.5, tl.cex = 10.0)
+  ggcorrplot(type = "full", lab = TRUE, lab_size = 1.5, tl.cex = 9.0)
 ```
 
 For better visualization, categorical variables with over ten terms (`name`, `location`) are filtered out in the correlation plot. From the upper-right corner of the plot we can see a strong positive correlation between `engine` and `power`. Besides, `milage` is negatively associated with both `engine` and `power`.  
@@ -156,39 +157,30 @@ For better visualization, categorical variables with over ten terms (`name`, `lo
 
 # Data Partitioning
 
-The data is splitted into training data and testing data by the proportion of 0.8:0.2.
+The data is split into training data and testing data by the proportion of 0.8:0.2.
 
 
 # Model Building
 
-What predictor variables did you include?
-What technique did you use? What assumptions, if any, are being made by using this technique?
-If there Ire tuning parameters, how did you pick their values?
-Discuss the training/test performance if you have a test data set.
-Which variables play important roles in predicting the response?
-What are the limitations of the models you used (if there are any)? Are the models flexible enough to capture the underlying truth?
-...
-
-
-5 models are used to fit the training data: Lasso, Elastic Net, Principal components regression (PCR), Partial least squares (PLS), and Multivariate Adaptive Regression Spline (MARS). Cross validation is used to select the best parameter or parameter combination for each model.
+4 models are used to fit the training data: Lasso, Elastic Net,  Partial least squares (PLS), and Multivariate Adaptive Regression Spline (MARS). Cross validation is used to select the best parameter or parameter combination for each model.
 
 
 ### Lasso
 
-The tuning parameter $\lambda$ controls the L1 regularization, as $\lambda$ increases, the number of predictors in the model decreases. Setting the candidate values of $\lambda$ to be from `r exp(-2)` to `r exp(4)` with 100 steps, the best-tune $\lambda$ is 2.069. 
+The tuning parameter $\lambda$ controls the L1 regularization, as $\lambda$ increases, the number of predictors in the model decreases. Setting the candidate values of $\lambda$ to be from `r exp(-2)` to `r exp(4)` with 100 steps, the best-tune $\lambda$ is 2.069. All five numeric predictors are included in the final model.   
 
 ### Elastic Net
 
-Elastic net is a regularized regression method that linearly combines the L1 and L2 penalties of the lasso and ridge methods.
-
-### Principal components regression (PCR)
-
+Elastic net is a regularized regression method that linearly combines the L1 and L2 penalties of the Lasso and Ridge methods.
+In addition to setting and choosing a lambda value, elastic net also allows us to tune the alpha parameter where $\alpha$ = 0 corresponds to Ridge and $\alpha$ = 1 to Lasso. The optimum alpha chosen is 0.25, and the optimum $\lambda$ is 5.136.  
 
 ### Partial least squares (PLS)
 
+Instead of finding hyperplanes of maximum variance between the response and independent variables, PLS finds a linear regression model by projecting the predicted variables and the observable variables to a new space. The tuning parameter - number of components in the final model is 18.
 
 ### Multivariate Adaptive Regression Spline (MARS)
 
+MARS is a non-parametric regression technique and can be seen as an extension of linear models, which can can be used to model nonlinear relationships and interactions between a set of predictor variables and a response variable. The best tune metrics are nprune = 12, degree = 2. There are 12 terms in the final model.
 
 
 # Model limitations
