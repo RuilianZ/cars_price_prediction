@@ -152,6 +152,7 @@ model.matrix(price ~ ., data = car %>% select(-name, -location))[ , -1] %>%
 ## Data partitioning
 
 ```{r}
+set.seed(0324)
 index_train = createDataPartition(
   y = car$price,
   p = 0.8,
@@ -166,6 +167,8 @@ train_y = train_df$price
 
 test_x = model.matrix(price ~ ., test_df)[ , -1]
 test_y = test_df$price
+
+test_all = model.matrix(price ~ ., test_df) # for enet prediction
 ```
 
 
@@ -238,7 +241,7 @@ enet_fit$bestTune
 ```
 
 
-### Principal components regression (PCR)
+### Principal components regression (PCR) - not used
 
 ```{r}
 set.seed(0324)
@@ -251,6 +254,8 @@ pcr_fit = train(x = train_x,
                 preProcess = c("center", "scale", "zv")) 
 
 summary(pcr_fit)
+
+pcr_fit$bestTune
 
 pcr_pred = predict(pcr_fit, newdata = test_x)
 
@@ -302,6 +307,8 @@ mars_fit = train(x = train_x,
 ggplot(mars_fit)
 
 mars_fit$bestTune
+
+# coef(mars_fit$finalModel)
 ```
 
 
