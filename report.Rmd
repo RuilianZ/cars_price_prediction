@@ -261,12 +261,6 @@ grid.arrange(t1, t2, t3, t4, nrow = 2)
 
 The plots for tuning parameters are consistent with the best tuning parameters reported above.
 ```{r, message = FALSE, echo = FALSE}
-knitr::opts_chunk$set(
-  fig.width = 5,
-  fig.asp = .7,
-  out.width = "90%"
-)
-
 # vip plots
 library(vip)
 v1 = vip(lasso_fit$finalModel)
@@ -276,8 +270,8 @@ v4 = vip(mars_fit$finalModel)
 
 grid.arrange(v1, v2, v3, v4, nrow = 2)
 ```
-F
-rom the variance importance plots above, `power` and `year` exist in all four plots, indicating that they are important predictors.
+
+From the variance importance plots above, `power` and `year` exist in all four plots, indicating that they are important predictors.
 
 
 ## Model selection
@@ -291,6 +285,7 @@ summary(resamp)
 ```{r, echo = FALSE}
 bwplot(resamp, metric = "RMSE")
 ```
+
 By plotting the root mean square error (RMSE) of training data, MARS model can be selected since it has the smallest RMSE. 
 
 ```{r, echo = FALSE}
