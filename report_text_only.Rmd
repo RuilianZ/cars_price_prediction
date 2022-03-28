@@ -65,7 +65,7 @@ For the 3 linear models, the test error is calculated using the test data. The t
 ## Model limitations
 The penalty function of **Lasso** has several limitations. For example (not the case of this data), in the "large p, small n" case (high-dimensional data with few examples), the Lasso selects at most n variables before it saturates. Also if there is a group of highly correlated variables, then the Lasso tends to select one variable from a group and ignore the others. As is mentioned above, there are some association among `power`, `engine` and `mileage`, thus the lasso model's performance is not so well.  
 
-To overcome this limitation, the **Elastic Net** adds a quadratic part to the penalty, which when used alone is ridge regression. As the RMSE plot shows, the Elastic Net model do fit data better than Lasso. However, one disadvantage of Elastic Net is the computational cost. We need to cross-validate the relative weight of L1 vs. L2 penalty, and the number of values in the $\alpha$ grid increases computational cost. Besides, with greater flexibility comes increased probability of overfitting.  
+To overcome this limitation, the **Elastic Net** adds a quadratic part to the penalty, which when used alone is ridge regression. However, one disadvantage of Elastic Net is the computational cost. We need to cross-validate the relative weight of L1 vs. L2 penalty, and the number of values in the $\alpha$ grid increases computational cost. Besides, with greater flexibility comes increased probability of overfitting.  
 
 For **PLS**, the major limitations are a higher risk of overlooking 'real' correlations and sensitivity to the relative scaling of the descriptor variables.  
 
