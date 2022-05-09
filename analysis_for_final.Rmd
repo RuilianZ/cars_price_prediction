@@ -1,0 +1,473 @@
+---
+title: "Used Cars Price Prediction (Final)"
+author: "Roxy Zhang"
+date: "5/9/2022"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+editor_options: 
+  chunk_output_type: inline
+---
+
+**This version is updated based on cars_price_prediction.rmd for the final project**
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(stringr) # for data cleaning
+library(patchwork) # align plots
+library(caret)
+library(ISLR)
+library(pls)
+library(ggcorrplot)
+library(rpart) # CART algorithm - Classification And Regression Trees
+library(rpart.plot) # visualization
+library(party) # CIT - Conditional Inference Tree
+library(partykit) # plotting
+library(randomForest)
+library(ranger)
+library(gbm)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .7,
+  out.width = "95%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+
+## Objective
+To predict the costs of used cars given the data collected from various sources and distributed across various locations in India.
+
+
+## Data cleaning
+
+```{r}
+# re-level owner type
+ord_owner_type = c("First", "Second", "Third", "Fourth")
+
+# data import and cleaning
+car = read_csv("data.csv") %>% 
+  janitor::clean_names() %>% 
+  select(- c(x1, new_price)) %>% 
+  drop_na() %>% 
+  filter(power != "null bhp") %>% 
+  mutate(
+    price = round(price * 1309.57, 0),
+    name = gsub(" .*$", "", name),
+    engine = gsub(" CC", "", engine),
+    mileage = gsub(" .*$", "", mileage),
+    power = gsub(" bhp", "", power),
+    owner_type = gsub(" & Above", "", owner_type)) %>% 
+  mutate(
+    engine = as.numeric(engine),
+    mileage = as.numeric(mileage),
+    power = as.numeric(power),
+    name = as.factor(name),
+    location = as.factor(location),
+    fuel_type = as.factor(fuel_type),
+    transmission = as.factor(transmission),
+    owner_type = as.factor(owner_type),
+    owner_type = fct_relevel(owner_type, ord_owner_type),
+    seats = as.factor(seats)
+  ) %>% 
+  filter(kilometers_driven != 6500000) %>% 
+  select(name, location, fuel_type, transmission, owner_type, seats, everything())
+
+# check abnormal value
+car %>% 
+  filter(kilometers_driven > 1000000) %>% 
+  select(kilometers_driven) # 6500000
+
+range(car$kilometers_driven)
+
+range(car$year)
+
+# check for NA
+colSums(is.na(car))
+```
+
+For the response variable `price`, the original data used 100000 Indian Rupee as unit. For better illustration, we transformed it to USD, using the exchange rate of 100000 Indian Rupee equals to 1309.75 USD on March 21, 2022.  
+For numeric variables with unit, the units are deleted for model-building.
+
+
+## Exploratory Data Analysis
+
+```{r}
+# look at data summary
+dim(car)
+
+summary(car)
+
+skimr::skim(car)
+```
+
+There are 11 predictors and 1 response variable - `price`.  
+5 of the predictors are numeric, and the other 6 of them are categorical.
+
+```{r}
+# visualization for categorical variables
+theme_set(
+  theme_minimal() +
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  theme(legend.position = "none"))
+
+p1 = car %>% 
+  ggplot(aes(x = name, y = price, fill = name)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+p2 = car %>% 
+  ggplot(aes(x = fuel_type, y = price, fill = fuel_type)) +
+  geom_boxplot()
+
+p3 = car %>% 
+  ggplot(aes(x = transmission, y = price, fill = transmission)) +
+  geom_boxplot()
+
+p4 = car %>% 
+  ggplot(aes(x = owner_type, y = price, fill = owner_type)) +
+  geom_boxplot()
+
+p5 = car %>% 
+  ggplot(aes(x = seats, y = price, fill = seats)) +
+  geom_boxplot()
+
+(p2 + p3)/(p4 + p5)/(p1)
+```
+
+```{r}
+# visualization for numeric variable year
+# log transformation of price
+car %>% 
+  ggplot(aes(x = year, y = log(price))) + 
+  geom_bar(stat = "identity", fill = "blue")
+```
+
+```{r}
+# correlation plot for all data
+model.matrix(price ~ ., data = car %>% select(-name, -location))[ , -1] %>% 
+  cor(use = "pairwise.complete.obs") %>% 
+  ggcorrplot(type = "full", lab = TRUE, lab_size = 1.5, tl.cex = 10.0)
+```
+
+```
+
+
+
+## Data partitioning
+
+```{r}
+set.seed(0324)
+index_train = createDataPartition(
+  y = car$price,
+  p = 0.8,
+  list = FALSE
+)
+
+train_df = car[index_train, ]
+test_df = car[-index_train, ]
+
+train_x = model.matrix(price ~ ., train_df)[ ,-1]
+train_y = train_df$price
+
+test_x = model.matrix(price ~ ., test_df)[ , -1]
+test_y = test_df$price
+
+test_all = model.matrix(price ~ ., test_df) # for enet prediction
+```
+
+
+## Model building
+
+Start from the simplest - try lm first
+
+```{r}
+lm_fit = lm(price ~ ., data = car)
+#summary(lm_fit)
+```
+
+Adjusted R-squared:  0.7865 
+
+
+### Lasso
+
+```{r}
+set.seed(0324)
+
+lasso_fit = train(price ~ .,
+                  data = train_df,
+                  method = "glmnet",
+                  preProcess = c("center", "scale", "zv"), # zv for zero variance
+                  tuneGrid = expand.grid(alpha = 1, 
+                                          lambda = exp(seq(4, -2, length = 100))),
+                   trControl = trainControl(method = "cv"))
+
+summary(lasso_fit)
+
+# Plot RMSE against lambda
+plot(lasso_fit, xTrans = log)
+
+# Extract optimum lambda
+lasso_fit$bestTune
+
+# Extract coefficiencts
+#as.matrix(round(coef(lasso_fit$finalModel, lasso_fit$bestTune$lambda), 3))
+
+# Make prediction on test data
+lasso_predict = predict(lasso_fit, newdata = test_df)
+
+# Calculate test RMSE
+RMSE(lasso_predict, test_df$price)
+```
+
+### Elastic net
+
+```{r}
+set.seed(0324)
+
+enet_fit <- train(x = train_x,
+                  y = train_y,
+                  method = "glmnet",
+                  preProcess = c("center", "scale", "zv"),
+                  tuneGrid = expand.grid(alpha = seq(0, 1, length = 21),
+                                         lambda = exp(seq(-2, 7, length = 100))),
+                  trControl = trainControl(method = "cv"))
+
+# Plot RMSE against lambda
+myCol = rainbow(25)
+myPar = list(superpose.symbol = list(col = myCol),
+             superpose.line = list(col = myCol))
+
+plot(enet_fit, par.settings = myPar, xTrans = log, xlim = c(4, 7))
+
+
+# Extract optimum lambda
+enet_fit$bestTune
+```
+
+
+### Principal components regression (PCR) - not used
+
+```{r}
+set.seed(0324)
+
+pcr_fit = train(x = train_x, 
+                y = train_y,
+                method = "pcr",
+                tuneGrid = data.frame(ncomp = 1:40),
+                trControl = trainControl(method = "cv"),
+                preProcess = c("center", "scale", "zv")) 
+
+summary(pcr_fit)
+
+pcr_fit$bestTune
+
+pcr_pred = predict(pcr_fit, newdata = test_x)
+
+# test error: MSE
+mean((test_y - pcr_pred) ^ 2)
+
+ggplot(pcr_fit, highlight = TRUE) + theme_bw()
+```
+
+
+### Partial least squares (PLS)
+
+```{r}
+set.seed(0324)
+
+pls_fit = train(x = train_x, 
+                y = train_y,
+                method = "pls",
+                tuneGrid = data.frame(ncomp = 1:19),
+                trControl = trainControl(method = "cv"),
+                preProcess = c("center", "scale", "zv")) 
+
+summary(pls_fit)
+
+pls_pred = predict(pls_fit, newdata = test_x)
+
+# test error: MSE
+mean((test_y - pls_pred) ^ 2)
+
+ggplot(pls_fit, highlight = TRUE) + theme_bw()
+```
+
+
+### Multivariate Adaptive Regression Spline (MARS)
+
+```{r}
+set.seed(0324)
+
+mars_grid = expand.grid(
+  degree = 1:3,
+  nprune = 2:15)
+
+mars_fit = train(x = train_x, 
+                 y = train_y,
+                 method = "earth",
+                 tuneGrid = mars_grid,
+                 trControl = trainControl(method = "cv"))
+
+ggplot(mars_fit)
+
+mars_fit$bestTune
+
+# coef(mars_fit$finalModel)
+```
+
+
+
+
+
+## Model comparison
+
+```{r}
+resamp = resamples(list(lasso = lasso_fit, elastic_net = enet_fit,
+                         pcr = pcr_fit, pls = pls_fit, mars = mars_fit))
+
+summary(resamp)
+
+bwplot(resamp, metric = "RMSE")
+```
+
+
+
+
+## update on 09/05/2022
+
+## Regression Tree
+
+```{r}
+set.seed(0324)
+
+reg_tree = rpart(formula = price ~ . ,
+                 data = car,
+                 control = rpart.control(cp = 0))
+
+# cp table
+reg_tree_cptable = reg_tree$cptable
+
+# cross-validation plot
+plotcp(reg_tree)
+
+# minimum cross_validation error
+min_err = which.min(reg_tree_cptable[,4])
+
+# pruning
+reg_tree_prune = prune(reg_tree, 
+                       cp = reg_tree_cptable[min_err,1])
+
+#summary(reg_tree_prune) 
+
+# plot final tree
+# rpart.plot(reg_tree_prune)
+```
+
+```{r}
+# make prediction
+reg_tree_pred = predict(reg_tree_prune, newdata = test_df)
+
+head(reg_tree_pred)
+
+RMSE(reg_tree_pred, test_df$price)
+```
+
+RMSE: 3345.965
+
+
+
+
+## Random Forest
+
+```{r}
+set.seed(0324)
+
+# fast implementation using ranger
+random_forest = ranger(price ~ .,
+             data = train_df,
+             mtry = 6)
+
+random_forest_pred = predict(rf2, data = test_df)$predictions
+
+# test error
+RMSE(random_forest_pred, test_df$price)
+```
+
+RMSE: 3608.872
+
+```{r}
+set.seed(0324)
+
+# not used
+
+# train random forest model using caret
+ctrl = trainControl(method = "cv")
+
+rf_grid = expand.grid(mtry = seq(1, 16, 3),
+                      splitrule = "variance",
+                      min.node.size = 1:12)
+
+rf_grid_fit = train(price ~ .,
+               data = train_df,
+               method = "ranger",
+               tuneGrid = rf_grid,
+               trControl = ctrl)
+
+rf_grid_fit$bestTune
+
+ggplot(rf_grid_fit, highlight = TRUE)
+```
+
+
+## Boosting
+
+```{r}
+set.seed(0324)
+
+# fit a gradient boosting model with Gaussian loss function
+boost = gbm(price ~ .,
+            data = train_df,
+            distribution = "gaussian",
+            n.trees = 2000,
+            interaction.depth = 3,
+            shrinkage = 0.005,
+            cv.folds = 10,
+            n.cores = 2)
+
+# plot loss function as a result of number of trees added to the ensemble
+gbm.perf(boost, method = "cv") # 2000
+
+best.iter = 2000
+
+# check performance using the out-of-bag (OOB) error
+# the OOB error typically underestimates the optimal number of iterations
+gbm.perf(boost, method = "OOB")
+```
+
+* The best cross-validation iteration was `r best.iter`, as is shown by the vertical dash line.
+
+```{r}
+# plot relative influence of each variable
+par(mfrow = c(1, 2))
+summary(boost, n.trees = 1) # using first tree
+summary(boost, n.trees = best.iter) # using estimated best number of trees
+```
+
+```{r}
+# predict on the new data using the "best" number of trees
+# by default, predictions will be on the link scale
+boost_pred = predict(boost,
+                     newdata = test_df,
+                     n.trees = best.iter,
+                     type = "link")
+
+# test error
+RMSE(boost_pred, test_df$price)
+```
+
+RMSE: 3449.177
